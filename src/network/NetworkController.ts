@@ -4,6 +4,7 @@ import createInfuraProvider from 'eth-json-rpc-infura/src/createProvider';
 import createMetamaskProvider from 'web3-provider-engine/zero';
 import { Mutex } from 'async-mutex';
 import BaseController, { BaseConfig, BaseState } from '../BaseController';
+import { MAINNET, RPC } from '../constants';
 
 /**
  * Human-readable network name
@@ -18,7 +19,7 @@ export type NetworkType =
   | 'rpc';
 
 export enum NetworksChainId {
-  mainnet = '1',
+  mainnet = '97',
   kovan = '42',
   rinkeby = '4',
   goerli = '5',
@@ -96,7 +97,9 @@ export class NetworkController extends BaseController<
   ) {
     switch (type) {
       case 'kovan':
-      case 'mainnet':
+      case MAINNET:
+        this.setupStandardProvider(rpcTarget, chainId, ticker, nickname);
+        break;
       case 'rinkeby':
       case 'goerli':
       case 'ropsten':
@@ -105,7 +108,7 @@ export class NetworkController extends BaseController<
       case 'localhost':
         this.setupStandardProvider(LOCALHOST_RPC_URL);
         break;
-      case 'rpc':
+      case RPC:
         rpcTarget &&
           this.setupStandardProvider(rpcTarget, chainId, ticker, nickname);
         break;
@@ -146,7 +149,7 @@ export class NetworkController extends BaseController<
   }
 
   private setupStandardProvider(
-    rpcTarget: string,
+    rpcTarget?: string,
     chainId?: string,
     ticker?: string,
     nickname?: string,
@@ -200,7 +203,13 @@ export class NetworkController extends BaseController<
     super(config, state);
     this.defaultState = {
       network: 'loading',
-      provider: { type: 'mainnet', chainId: NetworksChainId.mainnet },
+      provider: {
+        type: MAINNET,
+        chainId: NetworksChainId.mainnet,
+        rpcTarget: 'https://data-seed-prebsc-1-s1.binance.org:8545/',
+        ticker: 'BNB',
+        nickname: 'BSC',
+      },
     };
     this.initialize();
   }
@@ -256,12 +265,23 @@ export class NetworkController extends BaseController<
       nickname,
       ...providerState
     } = this.state.provider;
-    this.update({
-      provider: {
-        ...providerState,
-        ...{ type, ticker: 'ETH', chainId: NetworksChainId[type] },
-      },
-    });
+
+    if (type === MAINNET) {
+      this.update({
+        provider: {
+          ...this.defaultState.provider,
+          ...{ type, ticker: 'BNB', chainId: NetworksChainId[type] },
+        },
+      });
+    } else {
+      this.update({
+        provider: {
+          ...providerState,
+          ...{ type, ticker: 'ETH', chainId: NetworksChainId[type] },
+        },
+      });
+    }
+
     this.refreshNetwork();
   }
 
@@ -282,7 +302,7 @@ export class NetworkController extends BaseController<
     this.update({
       provider: {
         ...this.state.provider,
-        ...{ type: 'rpc', ticker, rpcTarget, chainId, nickname },
+        ...{ type: RPC, ticker, rpcTarget, chainId, nickname },
       },
     });
     this.refreshNetwork();
