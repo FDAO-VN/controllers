@@ -59,7 +59,7 @@ export class PhishingController extends BaseController<
 
   private detector: any;
 
-  private handle?: NodeJS.Timer;
+  private handle?: ReturnType<typeof setTimeout>;
 
   /**
    * Name of this controller used during composition

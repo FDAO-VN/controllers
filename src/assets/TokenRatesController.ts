@@ -68,7 +68,7 @@ export class TokenRatesController extends BaseController<
   TokenRatesConfig,
   TokenRatesState
 > {
-  private handle?: NodeJS.Timer;
+  private handle?: ReturnType<typeof setTimeout>;
 
   private tokenList: Token[] = [];
 

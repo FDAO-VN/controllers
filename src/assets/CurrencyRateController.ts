@@ -56,7 +56,7 @@ export class CurrencyRateController extends BaseController<
 
   private mutex = new Mutex();
 
-  private handle?: NodeJS.Timer;
+  private handle?: ReturnType<typeof setTimeout>;
 
   private fetchExchangeRate: typeof defaultFetchExchangeRate;
 
