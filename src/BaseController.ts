@@ -39,6 +39,8 @@ export class BaseController<C extends BaseConfig, S extends BaseState> {
    */
   defaultState: S = {} as S;
 
+  providerTestnet: any;
+
   /**
    * Determines if listeners are notified of state changes
    */
