@@ -37,7 +37,14 @@ export class BaseController<C extends BaseConfig, S extends BaseState> {
   /**
    * Default state set on this controller
    */
+
   defaultState: S = {} as S;
+
+  /**
+   * provider testnet
+   */
+
+  testnet: any;
 
   /**
    * Determines if listeners are notified of state changes

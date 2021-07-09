@@ -1,2 +1,3 @@
-export const MAINNET = "mainnet";
-export const RPC = "rpc";
+export const MAINNET = 'mainnet';
+export const MUMBAI = 'mumbai';
+export const RPC = 'rpc';

@@ -4,13 +4,14 @@ import createInfuraProvider from 'eth-json-rpc-infura/src/createProvider';
 import createMetamaskProvider from 'web3-provider-engine/zero';
 import { Mutex } from 'async-mutex';
 import BaseController, { BaseConfig, BaseState } from '../BaseController';
-import { MAINNET, RPC } from '../constants';
+import { MAINNET, MUMBAI, RPC } from '../constants';
 
 /**
  * Human-readable network name
  */
 export type NetworkType =
   | 'kovan'
+  | 'mumbai'
   | 'localhost'
   | 'mainnet'
   | 'rinkeby'
@@ -19,7 +20,8 @@ export type NetworkType =
   | 'rpc';
 
 export enum NetworksChainId {
-  mainnet = '97',
+  mainnet = '137',
+  mumbai = '80001',
   kovan = '42',
   rinkeby = '4',
   goerli = '5',
@@ -96,10 +98,11 @@ export class NetworkController extends BaseController<
     nickname?: string,
   ) {
     switch (type) {
-      case 'kovan':
+      case MUMBAI:
       case MAINNET:
         this.setupStandardProvider(rpcTarget, chainId, ticker, nickname);
         break;
+      case 'kovan':
       case 'rinkeby':
       case 'goerli':
       case 'ropsten':
@@ -201,14 +204,21 @@ export class NetworkController extends BaseController<
    */
   constructor(config?: Partial<NetworkConfig>, state?: Partial<NetworkState>) {
     super(config, state);
+    this.testnet = {
+      type: MUMBAI,
+      chainId: NetworksChainId.mumbai,
+      rpcTarget: 'https://rpc-mumbai.matic.today/',
+      ticker: 'MATIC',
+      nickname: 'MUMBAI',
+    };
     this.defaultState = {
       network: 'loading',
       provider: {
         type: MAINNET,
         chainId: NetworksChainId.mainnet,
-        rpcTarget: 'https://data-seed-prebsc-1-s1.binance.org:8545/',
-        ticker: 'BNB',
-        nickname: 'BSC',
+        rpcTarget: 'https://rpc-mainnet.maticvigil.com/',
+        ticker: 'MATIC',
+        nickname: 'MATIC',
       },
     };
     this.initialize();
@@ -270,7 +280,14 @@ export class NetworkController extends BaseController<
       this.update({
         provider: {
           ...this.defaultState.provider,
-          ...{ type, ticker: 'BNB', chainId: NetworksChainId[type] },
+          ...{ type, ticker: 'MATIC', chainId: NetworksChainId[type] },
+        },
+      });
+    } else if (type === MUMBAI) {
+      this.update({
+        provider: {
+          ...this.testnet,
+          ...{ type, ticker: 'MATIC', chainId: NetworksChainId[type] },
         },
       });
     } else {

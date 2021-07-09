@@ -21,7 +21,7 @@ A collection of platform-agnostic modules for creating secure data models for cr
 First, install the package.
 
 ```sh
-yarn add @metamask/controllers
+yarn add fdao-controllers
 ```
 
 Then, compose stores to create a data model.
@@ -31,24 +31,26 @@ import {
   ComposableController,
   NetworkController,
   TokenRatesController,
-} from '@metamask/controllers';
+} from 'fdao-controllers';
 
 const datamodel = new ComposableController([
   new NetworkController(),
-  new TokenRatesController()
+  new TokenRatesController(),
 ]);
 
-datamodel.subscribe((state) => {/* data model has changed */});
+datamodel.subscribe((state) => {
+  /* data model has changed */
+});
 ```
 
 ## Modules
 
-`@metamask/controllers` consists of a collection of controller modules that each expose uniform APIs for common operations like configuration, state management, and subscription.
+`fdao-controllers` consists of a collection of controller modules that each expose uniform APIs for common operations like configuration, state management, and subscription.
 
 ### AccountTrackerController
 
 ```ts
-import AccountTrackerController from '@metamask/controllers';
+import AccountTrackerController from 'fdao-controllers';
 ```
 
 The AccountTrackerController tracks information associated with specific Ethereum accounts.
@@ -56,7 +58,7 @@ The AccountTrackerController tracks information associated with specific Ethereu
 ### AddressBookController
 
 ```ts
-import AddressBookController from '@metamask/controllers';
+import AddressBookController from 'fdao-controllers';
 ```
 
 The AddressBookController exposes functions for managing a list of recipient addresses and associated nicknames.
@@ -64,7 +66,7 @@ The AddressBookController exposes functions for managing a list of recipient add
 ### ComposableController
 
 ```ts
-import ComposableController from '@metamask/controllers';
+import ComposableController from 'fdao-controllers';
 ```
 
 The ComposableController can be used to compose multiple controllers together into a single controller.
@@ -72,7 +74,7 @@ The ComposableController can be used to compose multiple controllers together in
 ### CurrencyRateController
 
 ```ts
-import CurrencyRateController from '@metamask/controllers';
+import CurrencyRateController from 'fdao-controllers';
 ```
 
 The CurrencyRateController passively polls for an ETH-to-fiat exchange rate based on a chosen currency.
@@ -80,7 +82,7 @@ The CurrencyRateController passively polls for an ETH-to-fiat exchange rate base
 ### KeyringController
 
 ```ts
-import KeyringController from '@metamask/controllers';
+import KeyringController from 'fdao-controllers';
 ```
 
 The KeyringController is responsible for establishing and managing Ethereum address-based identities.
@@ -88,7 +90,7 @@ The KeyringController is responsible for establishing and managing Ethereum addr
 ### NetworkController
 
 ```ts
-import NetworkController from '@metamask/controllers';
+import NetworkController from 'fdao-controllers';
 ```
 
 The NetworkController is responsible for creating an underlying provider and for refreshing its configuration.
@@ -96,7 +98,7 @@ The NetworkController is responsible for creating an underlying provider and for
 ### PhishingController
 
 ```ts
-import PhishingController from '@metamask/controllers';
+import PhishingController from 'fdao-controllers';
 ```
 
 The PhishingController passively polls for community-maintained lists of approved and unapproved website origins.
@@ -104,7 +106,7 @@ The PhishingController passively polls for community-maintained lists of approve
 ### PreferencesController
 
 ```ts
-import PreferencesController from '@metamask/controllers';
+import PreferencesController from 'fdao-controllers';
 ```
 
 The PreferencesController manages agnostic global settings and exposes convenience methods for updating them.
@@ -112,7 +114,7 @@ The PreferencesController manages agnostic global settings and exposes convenien
 ### TokenRatesController
 
 ```ts
-import TokenRatesController from '@metamask/controllers';
+import TokenRatesController from 'fdao-controllers';
 ```
 
 The TokenRatesController passively polls on a set interval for token-to-fiat exchange rates.
@@ -120,7 +122,7 @@ The TokenRatesController passively polls on a set interval for token-to-fiat exc
 ### TransactionController
 
 ```ts
-import TransactionController from '@metamask/controllers';
+import TransactionController from 'fdao-controllers';
 ```
 
 The TransactionController is responsible for submitting and managing transactions.
@@ -128,14 +130,14 @@ The TransactionController is responsible for submitting and managing transaction
 ### util
 
 ```ts
-import util from '@metamask/controllers';
+import util from 'fdao-controllers';
 ```
 
 The util module exposes a set of utility functions for common operations like gas estimation and generating crypto-buying URLs.
 
 ## Concepts
 
-Using controllers should be straightforward since each controller exposes the same minimal API. The concepts detailed in this section form the entirety of the core API: knowing these concepts will allow you to fully use `@metamask/controllers` to build wallet data models.
+Using controllers should be straightforward since each controller exposes the same minimal API. The concepts detailed in this section form the entirety of the core API: knowing these concepts will allow you to fully use `fdao-controllers` to build wallet data models.
 
 ### Initialization
 
@@ -158,14 +160,14 @@ const controller = new Controller(<initial_config>, <initial_state>)
 A controller can also be configured (or reconfigured) after initialization by passing a configuration object to its `configure` method:
 
 ```ts
-const controller = new Controller()
+const controller = new Controller();
 controller.configure({ foo: 'bar', baz: 'qux' });
 ```
 
 Regardless of how a controller is configured, whether it's during or after initialization, configuration options can always be accessed on a controller as instance variables for convenience:
 
 ```ts
-const controller = new Controller()
+const controller = new Controller();
 controller.configure({ foo: 'bar', baz: 'qux' });
 console.log(controller.foo, controller.baz); // "bar qux"
 ```
@@ -198,7 +200,9 @@ Since each controller maintains an internal state object, there should be a way 
 Change handlers can be registered with a controller by passing a function to its `subscribe` method. This function will be called anytime the controller's underlying state changes and will be passed the current state as its only function argument:
 
 ```ts
-function onChange(state) { /* state data changed */ }
+function onChange(state) {
+  /* state data changed */
+}
 const controller = new Controller();
 controller.subscribe(onChange);
 ```
@@ -206,7 +210,9 @@ controller.subscribe(onChange);
 Change handlers can be removed from a controller by passing a function to its `unsubscribe` method. Any function passed to `unsubscribe` will be removed from the internal list of handlers and will no longer be called when state data changes:
 
 ```ts
-function onChange(state) { /* state data changed */ }
+function onChange(state) {
+  /* state data changed */
+}
 const controller = new Controller();
 controller.subscribe(onChange);
 // ...
@@ -223,19 +229,21 @@ The ComposableController is initialized by passing an array of controller instan
 import {
   ComposableController,
   NetworkController,
-  TokenRatesController
-} from '@metamask/controllers';
+  TokenRatesController,
+} from 'fdao-controllers';
 
 const datamodel = new ComposableController([
   new NetworkController(),
-  new TokenRatesController()
+  new TokenRatesController(),
 ]);
 ```
 
 The resulting composed controller exposes the same APIs as every other controller for configuration, state management, and subscription:
 
 ```ts
-datamodel.subscribe((state) => { /* some child state has changed */ });
+datamodel.subscribe((state) => {
+  /* some child state has changed */
+});
 ```
 
 The internal state maintained by a ComposableController will be keyed by child controller class name. It's also possible to access the `flatState` instance variable that is a convenience accessor for merged child state:
@@ -247,9 +255,9 @@ console.log(datamodel.flatState); // {infura: {...}, contractExchangeRates: [...
 
 ## Linking during development
 
-Linking `@metamask/controllers` into other projects involves a special NPM command to ensure that dependencies are not duplicated. This is because `@metamask/controllers` ships modules that are transpiled but not bundled, and [NPM does not deduplicate](https://github.com/npm/npm/issues/7742) linked dependency trees.
+Linking `fdao-controllers` into other projects involves a special NPM command to ensure that dependencies are not duplicated. This is because `fdao-controllers` ships modules that are transpiled but not bundled, and [NPM does not deduplicate](https://github.com/npm/npm/issues/7742) linked dependency trees.
 
-First, link `@metamask/controllers`.
+First, link `fdao-controllers`.
 
 ```sh
 $ yarn build:link
@@ -260,9 +268,9 @@ $ npm run build:link
 Then, link into other projects.
 
 ```sh
-$ yarn link @metamask/controllers
+$ yarn link fdao-controllers
 # or
-$ npm link @metamask/controllers
+$ npm link fdao-controllers
 ```
 
 ## Release & Publishing
@@ -270,8 +278,8 @@ $ npm link @metamask/controllers
 The project follows the same release process as the other libraries in the MetaMask organization:
 
 1. Create a release branch
-    - For a typical release, this would be based on `master`
-    - To update an older maintained major version, base the release branch on the major version branch (e.g. `1.x`)
+   - For a typical release, this would be based on `master`
+   - To update an older maintained major version, base the release branch on the major version branch (e.g. `1.x`)
 2. Update the changelog
 3. Update version in package.json file (e.g. `yarn version --minor --no-git-tag-version`)
 4. Create a pull request targeting the base branch (e.g. master or 1.x)
@@ -282,7 +290,7 @@ The project follows the same release process as the other libraries in the MetaM
 
 ## API documentation
 
-API documentation is auto-generated for the `@metamask/controllers` package on every commit to the `master` branch.
+API documentation is auto-generated for the `fdao-controllers` package on every commit to the `master` branch.
 
 [View API documentation](https://metamask.github.io/@metamask/controllers/)
 
