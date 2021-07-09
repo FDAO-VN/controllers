@@ -21,6 +21,7 @@ import {
   isSmartContractCode,
   handleTransactionFetch,
   query,
+  handleTransactionFetchRpc,
 } from '../util';
 
 /**
@@ -41,6 +42,10 @@ export interface Result {
  * @property etherscanApiKey - API key to be used to fetch token transactions
  */
 export interface FetchAllOptions {
+  fromBlock?: string;
+  etherscanApiKey?: string;
+}
+export interface FetchAllOptionsRpc {
   fromBlock?: string;
   etherscanApiKey?: string;
 }
@@ -891,6 +896,93 @@ export class TransactionController extends BaseController<
       etherscanTxResponse,
       etherscanTokenResponse,
     ] = await handleTransactionFetch(networkType, address, opt);
+
+    const normalizedTxs = etherscanTxResponse.result.map(
+      (tx: EtherscanTransactionMeta) =>
+        this.normalizeTx(tx, currentNetworkID, currentChainId),
+    );
+    const normalizedTokenTxs = etherscanTokenResponse.result.map(
+      (tx: EtherscanTransactionMeta) =>
+        this.normalizeTokenTx(tx, currentNetworkID, currentChainId),
+    );
+
+    const remoteTxs = [...normalizedTxs, ...normalizedTokenTxs].filter((tx) => {
+      const alreadyInTransactions = this.state.transactions.find(
+        ({ transactionHash }) => transactionHash === tx.transactionHash,
+      );
+      return !alreadyInTransactions;
+    });
+
+    const allTxs = [...remoteTxs, ...this.state.transactions];
+    allTxs.sort((a, b) => (a.time < b.time ? -1 : 1));
+
+    let latestIncomingTxBlockNumber: string | undefined;
+    allTxs.forEach(async (tx) => {
+      /* istanbul ignore next */
+      if (
+        // Using fallback to networkID only when there is no chainId present. Should be removed when networkID is completely removed.
+        (tx.chainId === currentChainId ||
+          (!tx.chainId && tx.networkID === currentNetworkID)) &&
+        tx.transaction.to &&
+        tx.transaction.to.toLowerCase() === address.toLowerCase()
+      ) {
+        if (
+          tx.blockNumber &&
+          (!latestIncomingTxBlockNumber ||
+            parseInt(latestIncomingTxBlockNumber, 10) <
+              parseInt(tx.blockNumber, 10))
+        ) {
+          latestIncomingTxBlockNumber = tx.blockNumber;
+        }
+      }
+      /* istanbul ignore else */
+      if (tx.toSmartContract === undefined) {
+        // If not `to` is a contract deploy, if not `data` is send eth
+        if (
+          tx.transaction.to &&
+          (!tx.transaction.data || tx.transaction.data !== '0x')
+        ) {
+          const code = await query(this.ethQuery, 'getCode', [
+            tx.transaction.to,
+          ]);
+          tx.toSmartContract = isSmartContractCode(code);
+        } else {
+          tx.toSmartContract = false;
+        }
+      }
+    });
+    // Update state only if new transactions were fetched
+    if (allTxs.length > this.state.transactions.length) {
+      this.update({ transactions: allTxs });
+    }
+    return latestIncomingTxBlockNumber;
+  }
+
+  /**
+   * Gets all transactions from rpc network for a specific address
+   * optionally starting from a specific block
+   *
+   * @param address - string representing the address to fetch the transactions from
+   * @param opt - Object containing optional data, fromBlock and Alethio API key
+   * @returns - Promise resolving to an string containing the block number of the latest incoming transaction.
+   */
+  async fetchAllRPC(
+    address: string,
+    opt?: FetchAllOptions,
+  ): Promise<string | void> {
+    const { provider, network: currentNetworkID } = this.getNetworkState();
+    const { chainId: currentChainId, type: networkType } = provider;
+
+    // const supportedNetworkIds = ['1', '3', '4', '42'];
+    // /* istanbul ignore next */
+    // if (supportedNetworkIds.indexOf(currentNetworkID) === -1) {
+    //   return undefined;
+    // }
+
+    const [
+      etherscanTxResponse,
+      etherscanTokenResponse,
+    ] = await handleTransactionFetchRpc(networkType, address, opt);
 
     const normalizedTxs = etherscanTxResponse.result.map(
       (tx: EtherscanTransactionMeta) =>

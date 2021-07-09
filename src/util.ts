@@ -7,6 +7,7 @@ import jsonschema from 'jsonschema';
 import {
   Transaction,
   FetchAllOptions,
+  FetchAllOptionsRpc,
 } from './transaction/TransactionController';
 import { MessageParams } from './message-manager/MessageManager';
 import { PersonalMessageParams } from './message-manager/PersonalMessageManager';
@@ -112,7 +113,27 @@ export function getEtherscanApiUrl(
   }
   return url;
 }
-
+export function getPolygonscanApiUrl(
+  networkType: string,
+  address: string,
+  action: string,
+  fromBlock?: string,
+  etherscanApiKey?: string,
+): string {
+  let etherscanSubdomain = 'api';
+  if (networkType !== 'mainnet') {
+    etherscanSubdomain = `api-${networkType}`;
+  }
+  const apiUrl = `https://${etherscanSubdomain}.polygonscan.com`;
+  let url = `${apiUrl}/api?module=account&action=${action}&address=${address}&tag=latest&page=1`;
+  if (fromBlock) {
+    url += `&startBlock=${fromBlock}`;
+  }
+  if (etherscanApiKey) {
+    url += `&apikey=${etherscanApiKey}`;
+  }
+  return url;
+}
 /**
  * Handles the fetch of incoming transactions
  *
@@ -167,7 +188,52 @@ export async function handleTransactionFetch(
 
   return [etherscanTxResponse, etherscanTokenResponse];
 }
+export async function handleTransactionFetchRpc(
+  networkType: string,
+  address: string,
+  opt?: FetchAllOptionsRpc,
+): Promise<[{ [result: string]: [] }, { [result: string]: [] }]> {
+  // transactions
+  const etherscanTxUrl = getPolygonscanApiUrl(
+    networkType,
+    address,
+    'txlist',
+    opt?.fromBlock,
+    opt?.etherscanApiKey,
+  );
+  const etherscanTxResponsePromise = handleFetch(etherscanTxUrl);
 
+  // tokens
+  const etherscanTokenUrl = getPolygonscanApiUrl(
+    networkType,
+    address,
+    'tokentx',
+    opt?.fromBlock,
+    opt?.etherscanApiKey,
+  );
+  const etherscanTokenResponsePromise = handleFetch(etherscanTokenUrl);
+
+  let [etherscanTxResponse, etherscanTokenResponse] = await Promise.all([
+    etherscanTxResponsePromise,
+    etherscanTokenResponsePromise,
+  ]);
+
+  if (
+    etherscanTxResponse.status === '0' ||
+    etherscanTxResponse.result.length <= 0
+  ) {
+    etherscanTxResponse = { result: [] };
+  }
+
+  if (
+    etherscanTokenResponse.status === '0' ||
+    etherscanTokenResponse.result.length <= 0
+  ) {
+    etherscanTokenResponse = { result: [] };
+  }
+
+  return [etherscanTxResponse, etherscanTokenResponse];
+}
 /**
  * Converts a hex string to a BN object
  *
