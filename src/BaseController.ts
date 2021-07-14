@@ -41,10 +41,10 @@ export class BaseController<C extends BaseConfig, S extends BaseState> {
   defaultState: S = {} as S;
 
   /**
-   * provider testnet
+   * provider customNet
    */
 
-  testnet: any;
+  customNets: any;
 
   /**
    * Determines if listeners are notified of state changes

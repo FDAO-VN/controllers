@@ -1,6 +1,6 @@
 {
   "name": "@fdao/controllers",
-  "version": "8.0.1",
+  "version": "8.0.3",
   "description": "Collection of platform-agnostic modules for creating secure data models for cryptocurrency wallets",
   "license": "MIT",
   "files": [

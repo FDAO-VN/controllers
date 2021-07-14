@@ -4,7 +4,7 @@ import createInfuraProvider from 'eth-json-rpc-infura/src/createProvider';
 import createMetamaskProvider from 'web3-provider-engine/zero';
 import { Mutex } from 'async-mutex';
 import BaseController, { BaseConfig, BaseState } from '../BaseController';
-import { MAINNET, MUMBAI, RPC } from '../constants';
+import { MAINNET, MUMBAI, RPC, ETH, BSC } from '../constants';
 
 /**
  * Human-readable network name
@@ -14,6 +14,8 @@ export type NetworkType =
   | 'mumbai'
   | 'localhost'
   | 'mainnet'
+  | 'eth'
+  | 'bsc'
   | 'rinkeby'
   | 'goerli'
   | 'ropsten'
@@ -22,6 +24,8 @@ export type NetworkType =
 export enum NetworksChainId {
   mainnet = '137',
   mumbai = '80001',
+  eth = '1',
+  bsc = '56',
   kovan = '42',
   rinkeby = '4',
   goerli = '5',
@@ -98,9 +102,13 @@ export class NetworkController extends BaseController<
     nickname?: string,
   ) {
     switch (type) {
+      case BSC:
       case MUMBAI:
       case MAINNET:
         this.setupStandardProvider(rpcTarget, chainId, ticker, nickname);
+        break;
+      case ETH:
+        this.setupInfuraProvider(MAINNET);
         break;
       case 'kovan':
       case 'rinkeby':
@@ -204,12 +212,21 @@ export class NetworkController extends BaseController<
    */
   constructor(config?: Partial<NetworkConfig>, state?: Partial<NetworkState>) {
     super(config, state);
-    this.testnet = {
-      type: MUMBAI,
-      chainId: NetworksChainId.mumbai,
-      rpcTarget: 'https://rpc-mumbai.matic.today/',
-      ticker: 'MATIC',
-      nickname: 'MUMBAI',
+    this.customNets = {
+      [BSC]: {
+        rpcTarget: 'https://bsc-dataseed.binance.org/',
+        chainId: 56,
+        type: 'bsc',
+        ticker: 'BNB',
+        nickname: 'BSC',
+      },
+      [MUMBAI]: {
+        type: MUMBAI,
+        chainId: NetworksChainId.mumbai,
+        rpcTarget: 'https://rpc-mumbai.matic.today/',
+        ticker: 'tMATIC',
+        nickname: 'MUMBAI',
+      },
     };
     this.defaultState = {
       network: 'loading',
@@ -286,8 +303,15 @@ export class NetworkController extends BaseController<
     } else if (type === MUMBAI) {
       this.update({
         provider: {
-          ...this.testnet,
-          ...{ type, ticker: 'MATIC', chainId: NetworksChainId[type] },
+          ...this.customNets[MUMBAI],
+          ...{ type, ticker: 'tMATIC', chainId: NetworksChainId[type] },
+        },
+      });
+    } else if (type === BSC) {
+      this.update({
+        provider: {
+          ...this.customNets[BSC],
+          ...{ type, ticker: 'BNB', chainId: NetworksChainId[type] },
         },
       });
     } else {
