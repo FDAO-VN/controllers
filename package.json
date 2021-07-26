@@ -1,6 +1,6 @@
 {
-  "name": "@metamask/controllers",
-  "version": "12.1.0",
+  "name": "@fdao/controllers",
+  "version": "12.1.1",
   "description": "Collection of platform-agnostic modules for creating secure data models for cryptocurrency wallets",
   "license": "MIT",
   "files": [

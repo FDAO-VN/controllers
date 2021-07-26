@@ -1,4 +1,4 @@
-# `@metamask/controllers`
+# `@fdao/controllers`
 
 A collection of platform-agnostic modules for creating secure data models for cryptocurrency wallets.
 
@@ -21,7 +21,7 @@ A collection of platform-agnostic modules for creating secure data models for cr
 First, install the package.
 
 ```sh
-yarn add @metamask/controllers
+yarn add @fdao/controllers
 ```
 
 Then, compose stores to create a data model.
@@ -31,7 +31,7 @@ import {
   ComposableController,
   NetworkController,
   TokenRatesController,
-} from '@metamask/controllers';
+} from '@fdao/controllers';
 
 const datamodel = new ComposableController([
   new NetworkController(),
@@ -45,12 +45,12 @@ datamodel.subscribe((state) => {
 
 ## Modules
 
-`@metamask/controllers` consists of a collection of controller modules that each expose uniform APIs for common operations like configuration, state management, and subscription.
+`@fdao/controllers` consists of a collection of controller modules that each expose uniform APIs for common operations like configuration, state management, and subscription.
 
 ### AccountTrackerController
 
 ```ts
-import AccountTrackerController from '@metamask/controllers';
+import AccountTrackerController from '@fdao/controllers';
 ```
 
 The AccountTrackerController tracks information associated with specific Ethereum accounts.
@@ -58,7 +58,7 @@ The AccountTrackerController tracks information associated with specific Ethereu
 ### AddressBookController
 
 ```ts
-import AddressBookController from '@metamask/controllers';
+import AddressBookController from '@fdao/controllers';
 ```
 
 The AddressBookController exposes functions for managing a list of recipient addresses and associated nicknames.
@@ -66,7 +66,7 @@ The AddressBookController exposes functions for managing a list of recipient add
 ### ComposableController
 
 ```ts
-import ComposableController from '@metamask/controllers';
+import ComposableController from '@fdao/controllers';
 ```
 
 The ComposableController can be used to compose multiple controllers together into a single controller.
@@ -74,7 +74,7 @@ The ComposableController can be used to compose multiple controllers together in
 ### CurrencyRateController
 
 ```ts
-import CurrencyRateController from '@metamask/controllers';
+import CurrencyRateController from '@fdao/controllers';
 ```
 
 The CurrencyRateController passively polls for an ETH-to-fiat exchange rate based on a chosen currency.
@@ -82,7 +82,7 @@ The CurrencyRateController passively polls for an ETH-to-fiat exchange rate base
 ### KeyringController
 
 ```ts
-import KeyringController from '@metamask/controllers';
+import KeyringController from '@fdao/controllers';
 ```
 
 The KeyringController is responsible for establishing and managing Ethereum address-based identities.
@@ -90,7 +90,7 @@ The KeyringController is responsible for establishing and managing Ethereum addr
 ### NetworkController
 
 ```ts
-import NetworkController from '@metamask/controllers';
+import NetworkController from '@fdao/controllers';
 ```
 
 The NetworkController is responsible for creating an underlying provider and for refreshing its configuration.
@@ -98,7 +98,7 @@ The NetworkController is responsible for creating an underlying provider and for
 ### PhishingController
 
 ```ts
-import PhishingController from '@metamask/controllers';
+import PhishingController from '@fdao/controllers';
 ```
 
 The PhishingController passively polls for community-maintained lists of approved and unapproved website origins.
@@ -106,7 +106,7 @@ The PhishingController passively polls for community-maintained lists of approve
 ### PreferencesController
 
 ```ts
-import PreferencesController from '@metamask/controllers';
+import PreferencesController from '@fdao/controllers';
 ```
 
 The PreferencesController manages agnostic global settings and exposes convenience methods for updating them.
@@ -114,7 +114,7 @@ The PreferencesController manages agnostic global settings and exposes convenien
 ### TokenRatesController
 
 ```ts
-import TokenRatesController from '@metamask/controllers';
+import TokenRatesController from '@fdao/controllers';
 ```
 
 The TokenRatesController passively polls on a set interval for token-to-fiat exchange rates.
@@ -122,7 +122,7 @@ The TokenRatesController passively polls on a set interval for token-to-fiat exc
 ### TransactionController
 
 ```ts
-import TransactionController from '@metamask/controllers';
+import TransactionController from '@fdao/controllers';
 ```
 
 The TransactionController is responsible for submitting and managing transactions.
@@ -130,7 +130,7 @@ The TransactionController is responsible for submitting and managing transaction
 ### util
 
 ```ts
-import util from '@metamask/controllers';
+import util from '@fdao/controllers';
 ```
 
 The util module exposes a set of utility functions for common operations like gas estimation and generating crypto-buying URLs.
@@ -230,7 +230,7 @@ import {
   ComposableController,
   NetworkController,
   TokenRatesController,
-} from '@metamask/controllers';
+} from '@fdao/controllers';
 
 const datamodel = new ComposableController([
   new NetworkController(),
@@ -271,9 +271,9 @@ Run `yarn lint` to run the linter, or run `yarn lint:fix` to run the linter and 
 
 ### Linking During Development
 
-Linking `@metamask/controllers` into other projects involves a special NPM command to ensure that dependencies are not duplicated. This is because `@metamask/controllers` ships modules that are transpiled but not bundled, and [NPM does not deduplicate](https://github.com/npm/npm/issues/7742) linked dependency trees.
+Linking `@fdao/controllers` into other projects involves a special NPM command to ensure that dependencies are not duplicated. This is because `@fdao/controllers` ships modules that are transpiled but not bundled, and [NPM does not deduplicate](https://github.com/npm/npm/issues/7742) linked dependency trees.
 
-First, `yarn build:link` in this repository, then link `@metamask/controllers` by running `yarn link` in the consumer repository.
+First, `yarn build:link` in this repository, then link `@fdao/controllers` by running `yarn link` in the consumer repository.
 
 ### Release & Publishing
 
