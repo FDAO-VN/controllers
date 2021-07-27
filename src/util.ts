@@ -20,7 +20,15 @@ import { MessageParams } from './message-manager/MessageManager';
 import { PersonalMessageParams } from './message-manager/PersonalMessageManager';
 import { TypedMessageParams } from './message-manager/TypedMessageManager';
 import { Token } from './assets/TokenRatesController';
-import { MAINNET } from './constants';
+import {
+  BSC,
+  BSC_SCAN_URL,
+  MAINNET,
+  MUMBAI,
+  MUMBAI_SCAN_URL,
+  POLYGON,
+  POLYGON_SCAN_URL,
+} from './constants';
 
 const hexRe = /^[0-9A-Fa-f]+$/gu;
 
@@ -131,10 +139,28 @@ export function getEtherscanApiUrl(
   etherscanApiKey?: string,
 ): string {
   let etherscanSubdomain = 'api';
+  let etherscanDomain = 'etherscan.io';
   if (networkType !== MAINNET) {
-    etherscanSubdomain = `api-${networkType}`;
+    switch (networkType) {
+      case BSC:
+        etherscanDomain = BSC_SCAN_URL;
+        etherscanSubdomain = `api`;
+        break;
+      case MUMBAI:
+        etherscanDomain = MUMBAI_SCAN_URL;
+        etherscanSubdomain = `api-testnet`;
+        break;
+      case POLYGON:
+        etherscanDomain = POLYGON_SCAN_URL;
+        etherscanSubdomain = `api`;
+        break;
+      default:
+        etherscanDomain = 'etherscan.io';
+        etherscanSubdomain = `api-${networkType}`;
+        break;
+    }
   }
-  const apiUrl = `https://${etherscanSubdomain}.etherscan.io`;
+  const apiUrl = `https://${etherscanSubdomain}.${etherscanDomain}`;
   let url = `${apiUrl}/api?module=account&action=${action}&address=${address}&tag=latest&page=1`;
   if (fromBlock) {
     url += `&startBlock=${fromBlock}`;

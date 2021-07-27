@@ -2,6 +2,9 @@
 
 A collection of platform-agnostic modules for creating secure data models for cryptocurrency wallets.
 
+Add Default Network: BSC, Polygon, Mumbai.
+Support polling update transaction for BSC, Polygon, Mumbai
+
 ## Table of Contents
 
 - [Usage](#usage)
