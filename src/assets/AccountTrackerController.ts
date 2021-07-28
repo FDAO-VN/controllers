@@ -36,6 +36,7 @@ export interface AccountTrackerConfig extends BaseConfig {
  */
 export interface AccountTrackerState extends BaseState {
   accounts: { [address: string]: AccountInformation };
+  loading: boolean;
 }
 
 /**
@@ -103,7 +104,7 @@ export class AccountTrackerController extends BaseController<
     this.defaultConfig = {
       interval: 10000,
     };
-    this.defaultState = { accounts: {} };
+    this.defaultState = { accounts: {}, loading: false };
     this.initialize();
     this.getIdentities = getIdentities;
     onPreferencesStateChange(() => {
@@ -156,6 +157,35 @@ export class AccountTrackerController extends BaseController<
         this.update({ accounts: { ...accounts } });
       });
     }
+  };
+
+  /**
+   * RefreshWithLoading all accounts in the current keychain emit loading
+   */
+  refreshWithLoading = async () => {
+    this.update({
+      loading: true,
+    });
+    this.syncAccounts();
+    const { accounts } = this.state;
+    const promiseGetBalance = [];
+    for (const address in accounts) {
+      promiseGetBalance.push(
+        safelyExecuteWithTimeout(async () => {
+          const balance = await query(this.ethQuery, 'getBalance', [address]);
+          accounts[address] = { balance: BNToHex(balance) };
+          this.update({ accounts: { ...accounts } });
+        }),
+      );
+      // await safelyExecuteWithTimeout(async () => {
+      //   const balance = await query(this.ethQuery, 'getBalance', [address]);
+      //   accounts[address] = { balance: BNToHex(balance) };
+      //   this.update({ accounts: { ...accounts }, loading: false });
+      // });
+    }
+    Promise.all(promiseGetBalance).then(() => {
+      this.update({ loading: false });
+    });
   };
 }
 

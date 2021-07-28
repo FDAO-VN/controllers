@@ -4,13 +4,16 @@ import createInfuraProvider from 'eth-json-rpc-infura/src/createProvider';
 import createMetamaskProvider from 'web3-provider-engine/zero';
 import { Mutex } from 'async-mutex';
 import { BaseController, BaseConfig, BaseState } from '../BaseController';
-import { MAINNET, RPC } from '../constants';
+import { MAINNET, RPC, MUMBAI, POLYGON, BSC } from '../constants';
 
 /**
  * Human-readable network name
  */
 export type NetworkType =
   | 'kovan'
+  | 'bsc'
+  | 'mumbai'
+  | 'polygon'
   | 'localhost'
   | 'mainnet'
   | 'rinkeby'
@@ -22,6 +25,9 @@ export type NetworkType =
 
 export enum NetworksChainId {
   mainnet = '1',
+  bsc = '56',
+  mumbai = '80001',
+  polygon = '137',
   kovan = '42',
   rinkeby = '4',
   goerli = '5',
@@ -112,6 +118,12 @@ export class NetworkController extends BaseController<
   ) {
     this.update({ isCustomNetwork: this.getIsCustomNetwork(chainId) });
     switch (type) {
+      case BSC:
+      case POLYGON:
+      case MUMBAI:
+        rpcTarget &&
+          this.setupStandardProvider(rpcTarget, chainId, ticker, nickname);
+        break;
       case 'kovan':
       case MAINNET:
       case 'rinkeby':
@@ -221,6 +233,11 @@ export class NetworkController extends BaseController<
   provider: any;
 
   /**
+   * list custom network
+   */
+  customNetwork: any;
+
+  /**
    * Creates a NetworkController instance
    *
    * @param config - Initial options used to configure this controller
@@ -228,10 +245,33 @@ export class NetworkController extends BaseController<
    */
   constructor(config?: Partial<NetworkConfig>, state?: Partial<NetworkState>) {
     super(config, state);
+    this.customNetwork = {
+      [BSC]: {
+        rpcTarget: 'https://bsc-dataseed.binance.org/',
+        chainId: 56,
+        type: BSC,
+        ticker: 'BNB',
+        nickname: 'BSC',
+      },
+      [MUMBAI]: {
+        type: MUMBAI,
+        chainId: NetworksChainId.mumbai,
+        rpcTarget: 'https://rpc-mumbai.matic.today/',
+        ticker: 'tMATIC',
+        nickname: 'MUMBAI',
+      },
+      [POLYGON]: {
+        type: POLYGON,
+        chainId: NetworksChainId.polygon,
+        rpcTarget: 'https://rpc-mainnet.maticvigil.com/',
+        ticker: 'MATIC',
+        nickname: 'MATIC',
+      },
+    };
     this.defaultState = {
       network: 'loading',
-      isCustomNetwork: false,
-      provider: { type: MAINNET, chainId: NetworksChainId.mainnet },
+      isCustomNetwork: true,
+      provider: this.customNetwork[POLYGON],
       properties: { isEIP1559Compatible: false },
     };
     this.initialize();
@@ -289,12 +329,41 @@ export class NetworkController extends BaseController<
       nickname,
       ...providerState
     } = this.state.provider;
-    this.update({
-      provider: {
-        ...providerState,
-        ...{ type, ticker: 'ETH', chainId: NetworksChainId[type] },
-      },
-    });
+    switch (type) {
+      case BSC:
+        this.update({
+          provider: {
+            ...this.customNetwork[BSC],
+            ...{ type, ticker: 'BNB', chainId: NetworksChainId[type] },
+          },
+        });
+        break;
+      case MUMBAI:
+        this.update({
+          provider: {
+            ...this.customNetwork[MUMBAI],
+            ...{ type, ticker: 'tMATIC', chainId: NetworksChainId[type] },
+          },
+        });
+        break;
+      case POLYGON:
+        this.update({
+          provider: {
+            ...this.customNetwork[POLYGON],
+            ...{ type, ticker: 'MATIC', chainId: NetworksChainId[type] },
+          },
+        });
+        break;
+      default:
+        this.update({
+          provider: {
+            ...providerState,
+            ...{ type, ticker: 'ETH', chainId: NetworksChainId[type] },
+          },
+        });
+        break;
+    }
+
     this.refreshNetwork();
   }
 
