@@ -270,8 +270,8 @@ export class NetworkController extends BaseController<
     };
     this.defaultState = {
       network: 'loading',
-      isCustomNetwork: false,
-      provider: { type: MAINNET, chainId: NetworksChainId.mainnet },
+      isCustomNetwork: true,
+      provider: this.customNetwork[POLYGON],
       properties: { isEIP1559Compatible: false },
     };
     this.initialize();
