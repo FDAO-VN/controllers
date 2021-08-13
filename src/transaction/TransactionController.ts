@@ -339,6 +339,7 @@ export class TransactionController extends BaseController<
     } = txMeta;
     return {
       id: random({ msecs: time }),
+      blockNumber: txMeta.blockNumber,
       isTransfer: true,
       networkID: currentNetworkID,
       chainId: currentChainId,
