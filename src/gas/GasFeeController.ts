@@ -159,6 +159,10 @@ export type GasFeeStateNoEstimates = {
   gasEstimateType: NoEstimateType;
 };
 
+export interface FetchGasFeeEstimateOptions {
+  shouldUpdateState?: boolean;
+}
+
 /**
  * @type GasFeeState
  *
@@ -218,6 +222,8 @@ export class GasFeeController extends BaseController<typeof name, GasFeeState> {
   private getCurrentAccountEIP1559Compatibility;
 
   private getChainId;
+
+  private currentChainId;
 
   private ethQuery: any;
 
@@ -279,17 +285,33 @@ export class GasFeeController extends BaseController<typeof name, GasFeeState> {
     this.EIP1559APIEndpoint = EIP1559APIEndpoint;
     this.legacyAPIEndpoint = legacyAPIEndpoint;
     this.getChainId = getChainId;
-
+    this.currentChainId = this.getChainId();
     const provider = getProvider();
     this.ethQuery = new EthQuery(provider);
-    onNetworkStateChange(() => {
+    onNetworkStateChange(async () => {
       const newProvider = getProvider();
+      const newChainId = this.getChainId();
       this.ethQuery = new EthQuery(newProvider);
+      if (this.currentChainId !== newChainId) {
+        this.currentChainId = newChainId;
+        await this.resetPolling();
+      }
     });
   }
 
-  async fetchGasFeeEstimates() {
-    return await this._fetchGasFeeEstimateData();
+  async resetPolling() {
+    if (this.pollTokens.size !== 0) {
+      const tokens = Array.from(this.pollTokens);
+      this.stopPolling();
+      await this.getGasFeeEstimatesAndStartPolling(tokens[0]);
+      tokens.slice(1).forEach((token) => {
+        this.pollTokens.add(token);
+      });
+    }
+  }
+
+  async fetchGasFeeEstimates(options?: FetchGasFeeEstimateOptions) {
+    return await this._fetchGasFeeEstimateData(options);
   }
 
   async getGasFeeEstimatesAndStartPolling(
@@ -311,7 +333,10 @@ export class GasFeeController extends BaseController<typeof name, GasFeeState> {
    *
    * @returns GasFeeEstimates
    */
-  async _fetchGasFeeEstimateData(): Promise<GasFeeState | undefined> {
+  async _fetchGasFeeEstimateData(
+    options: FetchGasFeeEstimateOptions = {},
+  ): Promise<GasFeeState | undefined> {
+    const { shouldUpdateState = true } = options;
     let isEIP1559Compatible;
     const isLegacyGasAPICompatible = this.getCurrentNetworkLegacyGasAPICompatibility();
 
@@ -376,10 +401,11 @@ export class GasFeeController extends BaseController<typeof name, GasFeeState> {
         );
       }
     }
-
-    this.update(() => {
-      return newState;
-    });
+    if (shouldUpdateState) {
+      this.update(() => {
+        return newState;
+      });
+    }
 
     return newState;
   }

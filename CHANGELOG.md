@@ -6,6 +6,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [14.2.0]
+### Added
+- Added the ability to limit the number of transactions stored (default is 40) ([#550](https://github.com/MetaMask/controllers/pull/550))
+- Added the ability to speedUp and stop based on provided gasValues from consumer ([#535](https://github.com/MetaMask/controllers/pull/535))
+- Consolidate token list controller data.  ([#527](https://github.com/MetaMask/controllers/pull/527))
+  - Adds 3 fields: `address`, `aggregators`, and `occurrences` to static tokens
+
+## [14.1.0]
+### Added
+- Controller messenger selector subscriptions ([#551](https://github.com/MetaMask/controllers/pull/551))
+
+## [14.0.2] - 2021-07-28
+### Changed
+- Fix `resetPolling` functionality ([#546](https://github.com/MetaMask/controllers/pull/546))
+  - This fix addresses a bug that was discovered in `resetPolling` in `GasFeeController` functionality being called too frequently.
+- Improve token list API error handling ([#541](https://github.com/MetaMask/controllers/pull/541))
+
+## [14.0.1] - 2021-07-28 [DEPRECATED]
+### Changed
+- Ensure gas estimate fetching in gasFeeController correctly handles responses with invalid number of decimals ([#544](https://github.com/MetaMask/controllers/pull/544))
+- Bump @metamask/contract-metadata from 1.27.0 to 1.28.0 ([#540](https://github.com/MetaMask/controllers/pull/540))
+
+## [14.0.0] - 2021-07-27 [DEPRECATED]
+### Added
+- **BREAKING** Add EIP1559 support including `speedUpTransaction` and `stopTransaction` ([#521](https://github.com/MetaMask/controllers/pull/521))
+  - The breaking change here is that consumers of this repo now have to check if the transaction object includes a gas price and fetch and add it themselves (if need be).
+
+### Changed
+- Make equality comparisons for token and collectible addresses in TokensController and CollectiblesController case insensitive  ([#537](https://github.com/MetaMask/controllers/pull/537))
+- Reset gas fee estimate polling onNetworkStateChange in the gasFeeController ([#534](https://github.com/MetaMask/controllers/pull/534))
+
+### Fixed
+- Update AssetDetectionController to handle new fetch limits for the OpenSea collectibles api ([#536](https://github.com/MetaMask/controllers/pull/536))
+
+## [13.2.0]
+### Added
+- Add options to GasFeeController fetchGasFeeEstimates ([#526](https://github.com/MetaMask/controllers/pull/526))
+
 ## [13.1.0]
 ### Added
 - Add ERC721 detection to TokensController ([#524](https://github.com/MetaMask/controllers/pull/524)), ([#530](https://github.com/MetaMask/controllers/pull/530))
@@ -294,7 +332,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Remove shapeshift controller (#209)
 
-[Unreleased]: https://github.com/MetaMask/controllers/compare/v13.1.0...HEAD
+[Unreleased]: https://github.com/MetaMask/controllers/compare/v14.2.0...HEAD
+[14.2.0]: https://github.com/MetaMask/controllers/compare/v14.1.0...v14.2.0
+[14.1.0]: https://github.com/MetaMask/controllers/compare/v14.0.2...v14.1.0
+[14.0.2]: https://github.com/MetaMask/controllers/compare/v14.0.1...v14.0.2
+[14.0.1]: https://github.com/MetaMask/controllers/compare/v14.0.0...v14.0.1
+[14.0.0]: https://github.com/MetaMask/controllers/compare/v13.2.0...v14.0.0
+[13.2.0]: https://github.com/MetaMask/controllers/compare/v13.1.0...v13.2.0
 [13.1.0]: https://github.com/MetaMask/controllers/compare/v13.0.0...v13.1.0
 [13.0.0]: https://github.com/MetaMask/controllers/compare/v12.1.0...v13.0.0
 [12.1.0]: https://github.com/MetaMask/controllers/compare/v12.0.0...v12.1.0

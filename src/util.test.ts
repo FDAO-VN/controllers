@@ -4,10 +4,21 @@ import nock from 'nock';
 import HttpProvider from 'ethjs-provider-http';
 import EthQuery from 'eth-query';
 import * as util from './util';
+import {
+  Transaction,
+  GasPriceValue,
+  FeeMarketEIP1559Values,
+} from './transaction/TransactionController';
 
 const VALID = '4e1fF7229BDdAf0A73DF183a88d9c3a04cc975e0';
 const SOME_API = 'https://someapi.com';
 const SOME_FAILING_API = 'https://somefailingapi.com';
+
+const MAX_FEE_PER_GAS = 'maxFeePerGas';
+const MAX_PRIORITY_FEE_PER_GAS = 'maxPriorityFeePerGas';
+const GAS_PRICE = 'gasPrice';
+const FAIL = 'lol';
+const PASS = '0x1';
 
 const mockFlags: { [key: string]: any } = {
   estimateGas: null,
@@ -95,6 +106,9 @@ describe('util', () => {
       nonce: 'nonce',
       to: 'TO',
       value: 'value',
+      maxFeePerGas: 'maxFeePerGas',
+      maxPriorityFeePerGas: 'maxPriorityFeePerGas',
+      estimatedBaseFee: 'estimatedBaseFee',
     });
     expect(normalized).toStrictEqual({
       data: '0xdata',
@@ -104,6 +118,9 @@ describe('util', () => {
       nonce: '0xnonce',
       to: '0xto',
       value: '0xvalue',
+      maxFeePerGas: '0xmaxFeePerGas',
+      maxPriorityFeePerGas: '0xmaxPriorityFeePerGas',
+      estimatedBaseFee: '0xestimatedBaseFee',
     });
   });
 
@@ -113,12 +130,14 @@ describe('util', () => {
       expect(util.gweiDecToWEIBN(123).toNumber()).toBe(123000000000);
       expect(util.gweiDecToWEIBN(101).toNumber()).toBe(101000000000);
       expect(util.gweiDecToWEIBN(1234).toNumber()).toBe(1234000000000);
+      expect(util.gweiDecToWEIBN(1000).toNumber()).toBe(1000000000000);
     });
 
     it('should convert a number with a decimal part to WEI', () => {
       expect(util.gweiDecToWEIBN(1.1).toNumber()).toBe(1100000000);
       expect(util.gweiDecToWEIBN(123.01).toNumber()).toBe(123010000000);
       expect(util.gweiDecToWEIBN(101.001).toNumber()).toBe(101001000000);
+      expect(util.gweiDecToWEIBN(100.001).toNumber()).toBe(100001000000);
       expect(util.gweiDecToWEIBN(1234.567).toNumber()).toBe(1234567000000);
     });
 
@@ -134,6 +153,41 @@ describe('util', () => {
       expect(util.gweiDecToWEIBN(0.0109).toNumber()).toBe(10900000);
       expect(util.gweiDecToWEIBN(0.0014).toNumber()).toBe(1400000);
       expect(util.gweiDecToWEIBN(0.5676).toNumber()).toBe(567600000);
+    });
+
+    it('should handle inputs with more than 9 decimal places', () => {
+      expect(util.gweiDecToWEIBN(1.0000000162).toNumber()).toBe(1000000016);
+      expect(util.gweiDecToWEIBN(1.0000000165).toNumber()).toBe(1000000017);
+      expect(util.gweiDecToWEIBN(1.0000000199).toNumber()).toBe(1000000020);
+      expect(util.gweiDecToWEIBN(1.9999999999).toNumber()).toBe(2000000000);
+      expect(util.gweiDecToWEIBN(1.0000005998).toNumber()).toBe(1000000600);
+      expect(util.gweiDecToWEIBN(123456.0000005998).toNumber()).toBe(
+        123456000000600,
+      );
+      expect(util.gweiDecToWEIBN(1.000000016025).toNumber()).toBe(1000000016);
+      expect(util.gweiDecToWEIBN(1.0000000160000028).toNumber()).toBe(
+        1000000016,
+      );
+      expect(util.gweiDecToWEIBN(1.000000016522).toNumber()).toBe(1000000017);
+      expect(util.gweiDecToWEIBN(1.000000016800022).toNumber()).toBe(
+        1000000017,
+      );
+    });
+
+    it('should work if there are extraneous trailing decimal zeroes', () => {
+      expect(util.gweiDecToWEIBN('0.5000').toNumber()).toBe(500000000);
+      expect(util.gweiDecToWEIBN('123.002300').toNumber()).toBe(123002300000);
+      expect(util.gweiDecToWEIBN('123.002300000000').toNumber()).toBe(
+        123002300000,
+      );
+      expect(util.gweiDecToWEIBN('0.00000200000').toNumber()).toBe(2000);
+    });
+
+    it('should work if there is no whole number specified', () => {
+      expect(util.gweiDecToWEIBN('.1').toNumber()).toBe(100000000);
+      expect(util.gweiDecToWEIBN('.01').toNumber()).toBe(10000000);
+      expect(util.gweiDecToWEIBN('.001').toNumber()).toBe(1000000);
+      expect(util.gweiDecToWEIBN('.567').toNumber()).toBe(567000000);
     });
 
     it('should handle NaN', () => {
@@ -874,6 +928,119 @@ describe('util', () => {
       await expect(util.query(ethQuery, 'gasPrice', [])).rejects.toThrow(
         'Uh oh',
       );
+    });
+  });
+
+  describe('convertPriceToDecimal', () => {
+    it('should convert hex price to decimal', () => {
+      expect(util.convertPriceToDecimal('0x50fd51da')).toStrictEqual(
+        1358778842,
+      );
+    });
+    it('should return zero when undefined', () => {
+      expect(util.convertPriceToDecimal(undefined)).toStrictEqual(0);
+    });
+  });
+
+  describe('getIncreasedPriceHex', () => {
+    it('should get increased price from number as hex', () => {
+      expect(util.getIncreasedPriceHex(1358778842, 1.1)).toStrictEqual(
+        '0x5916a6d6',
+      );
+    });
+  });
+
+  describe('getIncreasedPriceFromExisting', () => {
+    it('should get increased price from hex as hex', () => {
+      expect(
+        util.getIncreasedPriceFromExisting('0x50fd51da', 1.1),
+      ).toStrictEqual('0x5916a6d6');
+    });
+  });
+
+  describe('isEIP1559Transaction', () => {
+    it('should detect EIP1559 transaction', () => {
+      const tx: Transaction = { from: '' };
+      const eip1559tx: Transaction = {
+        ...tx,
+        maxFeePerGas: '2',
+        maxPriorityFeePerGas: '3',
+      };
+      expect(util.isEIP1559Transaction(eip1559tx)).toBe(true);
+      expect(util.isEIP1559Transaction(tx)).toBe(false);
+    });
+  });
+
+  describe('validateGasValues', () => {
+    it('should throw when provided invalid gas values', () => {
+      const gasValues: GasPriceValue = {
+        [GAS_PRICE]: FAIL,
+      };
+      expect(() => util.validateGasValues(gasValues)).toThrow(TypeError);
+      expect(() => util.validateGasValues(gasValues)).toThrow(
+        `expected hex string for ${GAS_PRICE} but received: ${FAIL}`,
+      );
+    });
+    it('should throw when any provided gas values are invalid', () => {
+      const gasValues: FeeMarketEIP1559Values = {
+        [MAX_PRIORITY_FEE_PER_GAS]: PASS,
+        [MAX_FEE_PER_GAS]: FAIL,
+      };
+      expect(() => util.validateGasValues(gasValues)).toThrow(TypeError);
+      expect(() => util.validateGasValues(gasValues)).toThrow(
+        `expected hex string for ${MAX_FEE_PER_GAS} but received: ${FAIL}`,
+      );
+    });
+    it('should return true when provided valid gas values', () => {
+      const gasValues: FeeMarketEIP1559Values = {
+        [MAX_FEE_PER_GAS]: PASS,
+        [MAX_PRIORITY_FEE_PER_GAS]: PASS,
+      };
+      expect(() => util.validateGasValues(gasValues)).not.toThrow(TypeError);
+    });
+  });
+
+  describe('isFeeMarketEIP1559Values', () => {
+    it('should detect if isFeeMarketEIP1559Values', () => {
+      const gasValues = {
+        [MAX_PRIORITY_FEE_PER_GAS]: PASS,
+        [MAX_FEE_PER_GAS]: FAIL,
+      };
+      expect(util.isFeeMarketEIP1559Values(gasValues)).toBe(true);
+      expect(util.isGasPriceValue(gasValues)).toBe(false);
+    });
+  });
+
+  describe('isGasPriceValue', () => {
+    it('should detect if isGasPriceValue', () => {
+      const gasValues: GasPriceValue = {
+        [GAS_PRICE]: PASS,
+      };
+      expect(util.isGasPriceValue(gasValues)).toBe(true);
+      expect(util.isFeeMarketEIP1559Values(gasValues)).toBe(false);
+    });
+  });
+
+  describe('validateMinimumIncrease', () => {
+    it('should throw if increase does not meet minimum requirement', () => {
+      expect(() =>
+        util.validateMinimumIncrease('0x50fd51da', '0x5916a6d6'),
+      ).toThrow(Error);
+      expect(() =>
+        util.validateMinimumIncrease('0x50fd51da', '0x5916a6d6'),
+      ).toThrow(
+        'The proposed value: 1358778842 should meet or exceed the minimum value: 1494656726',
+      );
+    });
+    it('should not throw if increase meets minimum requirement', () => {
+      expect(() =>
+        util.validateMinimumIncrease('0x5916a6d6', '0x5916a6d6'),
+      ).not.toThrow(Error);
+    });
+    it('should not throw if increase exceeds minimum requirement', () => {
+      expect(() =>
+        util.validateMinimumIncrease('0x7162a5ca', '0x5916a6d6'),
+      ).not.toThrow(Error);
     });
   });
 });

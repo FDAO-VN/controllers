@@ -15,6 +15,8 @@ import { validate } from 'jsonschema';
 import {
   Transaction,
   FetchAllOptions,
+  GasPriceValue,
+  FeeMarketEIP1559Values,
 } from './transaction/TransactionController';
 import { MessageParams } from './message-manager/MessageManager';
 import { PersonalMessageParams } from './message-manager/PersonalMessageManager';
@@ -40,6 +42,11 @@ const NORMALIZERS: { [param in keyof Transaction]: any } = {
   nonce: (nonce: string) => addHexPrefix(nonce),
   to: (to: string) => addHexPrefix(to).toLowerCase(),
   value: (value: string) => addHexPrefix(value),
+  maxFeePerGas: (maxFeePerGas: string) => addHexPrefix(maxFeePerGas),
+  maxPriorityFeePerGas: (maxPriorityFeePerGas: string) =>
+    addHexPrefix(maxPriorityFeePerGas),
+  estimatedBaseFee: (maxPriorityFeePerGas: string) =>
+    addHexPrefix(maxPriorityFeePerGas),
 };
 
 /**
@@ -81,7 +88,29 @@ export function gweiDecToWEIBN(n: number | string) {
   if (Number.isNaN(n)) {
     return new BN(0);
   }
-  return toWei(n.toString(), 'gwei');
+
+  const parts = n.toString().split('.');
+  const wholePart = parts[0] || '0';
+  let decimalPart = parts[1] || '';
+
+  if (!decimalPart) {
+    return toWei(wholePart, 'gwei');
+  }
+  if (decimalPart.length <= 9) {
+    return toWei(`${wholePart}.${decimalPart}`, 'gwei');
+  }
+
+  const decimalPartToRemove = decimalPart.slice(9);
+  const decimalRoundingDigit = decimalPartToRemove[0];
+
+  decimalPart = decimalPart.slice(0, 9);
+  let wei = toWei(`${wholePart}.${decimalPart}`, 'gwei');
+
+  if (Number(decimalRoundingDigit) >= 5) {
+    wei = wei.add(new BN(1));
+  }
+
+  return wei;
 }
 
 /**
@@ -678,6 +707,69 @@ export function query(
       resolve(result);
     });
   });
+}
+
+/**
+ * Checks if a transaction is EIP-1559 by checking for the existence of
+ * maxFeePerGas and maxPriorityFeePerGas within its parameters
+ *
+ * @param transaction - Transaction object to add
+ * @returns - Boolean that is true if the transaction is EIP-1559 (has maxFeePerGas and maxPriorityFeePerGas), otherwise returns false
+ */
+export const isEIP1559Transaction = (transaction: Transaction): boolean => {
+  const hasOwnProp = (obj: Transaction, key: string) =>
+    Object.prototype.hasOwnProperty.call(obj, key);
+  return (
+    hasOwnProp(transaction, 'maxFeePerGas') &&
+    hasOwnProp(transaction, 'maxPriorityFeePerGas')
+  );
+};
+
+export const convertPriceToDecimal = (value: string | undefined): number =>
+  parseInt(value === undefined ? '0x0' : value, 16);
+
+export const getIncreasedPriceHex = (value: number, rate: number): string =>
+  addHexPrefix(`${parseInt(`${value * rate}`, 10).toString(16)}`);
+
+export const getIncreasedPriceFromExisting = (
+  value: string | undefined,
+  rate: number,
+): string => {
+  return getIncreasedPriceHex(convertPriceToDecimal(value), rate);
+};
+
+export const validateGasValues = (
+  gasValues: GasPriceValue | FeeMarketEIP1559Values,
+) => {
+  Object.keys(gasValues).forEach((key) => {
+    const value = (gasValues as any)[key];
+    if (typeof value !== 'string' || !isHexString(value)) {
+      throw new TypeError(
+        `expected hex string for ${key} but received: ${value}`,
+      );
+    }
+  });
+};
+
+export const isFeeMarketEIP1559Values = (
+  gasValues?: GasPriceValue | FeeMarketEIP1559Values,
+): gasValues is FeeMarketEIP1559Values =>
+  (gasValues as FeeMarketEIP1559Values)?.maxFeePerGas !== undefined ||
+  (gasValues as FeeMarketEIP1559Values)?.maxPriorityFeePerGas !== undefined;
+
+export const isGasPriceValue = (
+  gasValues?: GasPriceValue | FeeMarketEIP1559Values,
+): gasValues is GasPriceValue =>
+  (gasValues as GasPriceValue)?.gasPrice !== undefined;
+
+export function validateMinimumIncrease(proposed: string, min: string) {
+  const proposedDecimal = convertPriceToDecimal(proposed);
+  const minDecimal = convertPriceToDecimal(min);
+  if (proposedDecimal >= minDecimal) {
+    return proposed;
+  }
+  const errorMsg = `The proposed value: ${proposedDecimal} should meet or exceed the minimum value: ${minDecimal}`;
+  throw new Error(errorMsg);
 }
 
 export default {
