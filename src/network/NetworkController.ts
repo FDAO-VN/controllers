@@ -146,7 +146,7 @@ export class NetworkController extends BaseController<
   }
 
   private refreshNetwork() {
-    this.update({ network: 'loading' });
+    this.update({ network: 'loading', properties: {} });
     const { rpcTarget, type, chainId, ticker } = this.state.provider;
     this.initializeProvider(type, rpcTarget, chainId, ticker);
     this.lookupNetwork();
@@ -406,11 +406,13 @@ export class NetworkController extends BaseController<
             } else {
               const isEIP1559Compatible =
                 typeof block.baseFeePerGas !== 'undefined';
-              this.update({
-                properties: {
-                  isEIP1559Compatible,
-                },
-              });
+              if (properties.isEIP1559Compatible !== isEIP1559Compatible) {
+                this.update({
+                  properties: {
+                    isEIP1559Compatible,
+                  },
+                });
+              }
               resolve(isEIP1559Compatible);
             }
           },
