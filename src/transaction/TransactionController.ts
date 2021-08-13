@@ -560,11 +560,12 @@ export class TransactionController extends BaseController<
 
   getCommonConfiguration(): Common {
     const {
+      isCustomNetwork,
       network: networkId,
       provider: { type: chain, chainId, nickname: name },
     } = this.getNetworkState();
 
-    if (chain !== RPC) {
+    if (chain !== RPC && !isCustomNetwork) {
       return new Common({ chain, hardfork: HARDFORK });
     }
 
