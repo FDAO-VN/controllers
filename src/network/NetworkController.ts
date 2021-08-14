@@ -251,21 +251,21 @@ export class NetworkController extends BaseController<
         chainId: 56,
         type: BSC,
         ticker: 'BNB',
-        nickname: 'BSC',
+        nickname: 'BSC Mainnet',
       },
       [MUMBAI]: {
         type: MUMBAI,
         chainId: NetworksChainId.mumbai,
         rpcTarget: 'https://rpc-mumbai.matic.today/',
         ticker: 'tMATIC',
-        nickname: 'MUMBAI',
+        nickname: 'Mumbai Testnet',
       },
       [POLYGON]: {
         type: POLYGON,
         chainId: NetworksChainId.polygon,
         rpcTarget: 'https://rpc-mainnet.maticvigil.com/',
         ticker: 'MATIC',
-        nickname: 'MATIC',
+        nickname: 'Polygon Mainnet',
       },
     };
     this.defaultState = {

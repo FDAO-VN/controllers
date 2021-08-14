@@ -1,6 +1,6 @@
 {
   "name": "@fdao/controllers",
-  "version": "14.2.0",
+  "version": "14.4.0",
   "description": "Collection of platform-agnostic modules for creating secure data models for cryptocurrency wallets",
   "keywords": [
     "MetaMask",
