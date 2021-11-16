@@ -32,7 +32,8 @@
     "build": "rimraf dist && tsc --project .",
     "build:watch": "yarn build --watch",
     "build:link": "yarn build && cd dist && yarn link && rm -rf node_modules && cd ..",
-    "doc": "typedoc && touch docs/.nojekyll"
+    "doc": "typedoc && touch docs/.nojekyll",
+     "prepare": "npm run build"
   },
   "dependencies": {
     "@ethereumjs/common": "^2.3.1",
